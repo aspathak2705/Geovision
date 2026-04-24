@@ -1,1 +1,3 @@
-satellite_dataset
+data
+outputs
+__pycache__
