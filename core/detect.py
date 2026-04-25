@@ -1,12 +1,12 @@
 from ultralytics import YOLO
 
 class Detector:
-    def __init__(self, model_path="models/yolo_building.pt"):
+    def __init__(self, model_path="models/yolo_building.pt", confidence=0.6):
         self.model = YOLO(model_path)
+        self.confidence = confidence
 
     def run(self, image_path):
-        # Increase confidence threshold
-        results = self.model(image_path, conf=0.6)[0]
+        results = self.model(image_path, conf=self.confidence)[0]
 
         boxes = []
 
