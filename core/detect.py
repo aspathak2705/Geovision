@@ -2,17 +2,20 @@ from ultralytics import YOLO
 
 class Detector:
     def __init__(self, model_path="models/yolo_building.pt"):
-        try:
-            self.model = YOLO(model_path)
-            print(f"[INFO] Model loaded from {model_path}")
-        except Exception as e:
-            print("[ERROR] Failed to load model:", e)
+        self.model = YOLO(model_path)
 
     def run(self, image_path):
-        try:
-            results = self.model(image_path)
-            print(f"[INFO] Detection completed on {image_path}")
-            return results
-        except Exception as e:
-            print("[ERROR] Detection failed:", e)
-            return None
+        # Increase confidence threshold
+        results = self.model(image_path, conf=0.6)[0]
+
+        boxes = []
+
+        for box in results.boxes.xyxy:
+            x1, y1, x2, y2 = map(int, box)
+
+            # Filter small boxes
+            area = (x2 - x1) * (y2 - y1)
+            if area > 500:   # adjust if needed
+                boxes.append([x1, y1, x2, y2])
+
+        return boxes, results

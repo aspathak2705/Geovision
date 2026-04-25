@@ -2,14 +2,16 @@ import cv2
 import os
 
 def save_result(results, output_path="outputs/result.jpg"):
-    try:
-        os.makedirs("outputs", exist_ok=True)
+    os.makedirs("outputs", exist_ok=True)
 
-        for r in results:
-            annotated = r.plot()  # YOLO draws boxes + labels
-            cv2.imwrite(output_path, annotated)
+    for r in results:
+        img = r.orig_img.copy()
 
-        print(f"[INFO] Output saved at {output_path}")
+        # Draw ONLY boxes (no text)
+        for box in r.boxes.xyxy:
+            x1, y1, x2, y2 = map(int, box)
+            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
-    except Exception as e:
-        print("[ERROR] Visualization failed:", e)
+        cv2.imwrite(output_path, img)
+
+    print(f"[INFO] Clean detection saved at {output_path}")
