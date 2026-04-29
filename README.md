@@ -5,7 +5,8 @@
     <strong>An object-centric satellite change detection system for building-level geospatial intelligence</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/Interface-Streamlit-FF4B4B" alt="Streamlit" />
+    <img src="https://img.shields.io/badge/Frontend-React-61DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/API-FastAPI-009688" alt="FastAPI" />
     <img src="https://img.shields.io/badge/Detection-YOLOv8-111827" alt="YOLOv8" />
     <img src="https://img.shields.io/badge/Vision-OpenCV-5C3EE8" alt="OpenCV" />
     <img src="https://img.shields.io/badge/Language-Python-3776AB" alt="Python" />
@@ -26,7 +27,7 @@ Instead of relying on fragile pixel-by-pixel comparison, GeoVision uses an **obj
 - match detected objects using spatial reasoning
 - classify buildings as **new**, **removed**, or **unchanged**
 - generate visual outputs for detection, fusion, heatmap density, and summary metrics
-- present results through a professional Streamlit dashboard
+- present results through a professional React dashboard backed by a FastAPI service
 
 The system is designed for real-world satellite imagery where images may contain small spatial shifts, different lighting, seasonal changes, resolution variation, and map overlays.
 
@@ -141,7 +142,7 @@ The heatmap helps identify:
 
 ## Architecture & Tech Stack
 
-GeoVision is organized into a computer vision pipeline and a Streamlit dashboard.
+GeoVision is organized into a computer vision pipeline, a FastAPI backend, and a React dashboard.
 
 ### Computer Vision Pipeline
 
@@ -153,7 +154,8 @@ GeoVision is organized into a computer vision pipeline and a Streamlit dashboard
 
 ### Dashboard
 
-- **Framework:** Streamlit
+- **Frontend:** React, HTML, CSS, Vite
+- **Backend API:** FastAPI
 - **Pages:**
   - Upload
   - Results
@@ -224,6 +226,26 @@ Documents the system workflow:
 
 ```text
 GeoVision/
+|-- frontend/                    # React dashboard for Vercel
+|   |-- index.html               # Required deployment entrypoint
+|   |-- src/
+|       |-- App.jsx              # Dashboard shell and page selection
+|       |-- main.jsx             # React entrypoint
+|       |-- styles.css           # Dashboard styling
+|       |-- pages/               # React dashboard pages
+|       |   |-- Upload.jsx
+|       |   |-- Results.jsx
+|       |   |-- Analytics.jsx
+|       |   |-- About.jsx
+|       |-- components/          # Reusable dashboard components
+|       |   |-- uploader.jsx
+|       |   |-- image_viewer.jsx
+|       |   |-- metrics_panel.jsx
+|       |   |-- heatmap_view.jsx
+|       |-- services/
+|           |-- api.js           # Backend API client
+|-- backend/
+|   |-- main.py                  # FastAPI service for Render
 |-- app/                         # Streamlit dashboard
 |   |-- main.py                   # Dashboard entrypoint
 |   |-- pages/
@@ -254,6 +276,7 @@ GeoVision/
 |-- Custom_yolo_trainig.ipynb     # Model training notebook
 |-- run.py                        # CLI entrypoint
 |-- requirements.txt
+|-- render.yaml                   # Render service configuration
 |-- README.md
 ```
 
@@ -286,9 +309,41 @@ ultralytics
 opencv-python
 numpy
 streamlit
+fastapi
+uvicorn
+python-multipart
 ```
 
-### 2. Run the Dashboard
+### 2. Run the Backend API
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Default local API URL:
+
+```text
+http://localhost:8000
+```
+
+### 3. Run the React Dashboard
+
+From the frontend folder:
+
+```bash
+npm install
+npm run dev
+```
+
+The frontend reads the backend URL from:
+
+```text
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+For Vercel, set `VITE_API_BASE_URL` to your Render backend URL.
+
+### 4. Optional: Run the Original Streamlit Dashboard
 
 ```bash
 streamlit run app/main.py
@@ -302,7 +357,7 @@ http://localhost:8501
 
 If Streamlit starts on another port, use the URL shown in the terminal.
 
-### 3. Use the Dashboard
+### 5. Use the Dashboard
 
 1. Open the Upload page.
 2. Upload the baseline satellite image (`t1`).
