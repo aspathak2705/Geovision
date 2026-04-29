@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Vision-OpenCV-5C3EE8" alt="OpenCV" />
     <img src="https://img.shields.io/badge/Language-Python-3776AB" alt="Python" />
   </p>
-  <a href="https://geovision-aig8.onrender.com">Deployment Link</a>
+  <a href="https://geovision-three.vercel.app/">Deployment Link</a>
 </div>
 
 ---
