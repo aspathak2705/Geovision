@@ -32,6 +32,11 @@ def centroid_distance(box1, box2):
     return math.sqrt((c1[0] - c2[0])**2 + (c1[1] - c2[1])**2)
 
 
+def box_area(box):
+    x1, y1, x2, y2 = box
+    return max(0, x2 - x1) * max(0, y2 - y1)
+
+
 # Neighbor-aware logic
 def get_neighbors(target_box, all_boxes, k=3):
     tx, ty = centroid(target_box)
@@ -63,6 +68,33 @@ def neighbor_similarity(box1, box2, boxes_t1, boxes_t2):
     return score
 
 
+def is_same_detection(box1, box2, boxes_t1, boxes_t2, iou_thresh=0.3):
+    iou_score = compute_iou(box1, box2)
+    if iou_score >= iou_thresh:
+        return True
+
+    area1 = box_area(box1)
+    area2 = box_area(box2)
+    if area1 == 0 or area2 == 0:
+        return False
+
+    area_ratio = min(area1, area2) / max(area1, area2)
+    max_dim = max(
+        box1[2] - box1[0],
+        box1[3] - box1[1],
+        box2[2] - box2[0],
+        box2[3] - box2[1],
+    )
+    adaptive_distance = max(8, min(20, int(max_dim * 0.18)))
+
+    # Fallback match for slight detector jitter on same object.
+    return (
+        area_ratio >= 0.72
+        and centroid_distance(box1, box2) <= adaptive_distance
+        and neighbor_similarity(box1, box2, boxes_t1, boxes_t2) >= 2
+    )
+
+
 # Main fusion logic
 def analyze_changes(boxes_t1, boxes_t2, iou_thresh=0.3):
     matched_t2 = set()
@@ -71,22 +103,28 @@ def analyze_changes(boxes_t1, boxes_t2, iou_thresh=0.3):
     removed = []
     unchanged = []
 
-    for i, b1 in enumerate(boxes_t1):
-        found = False
+    for b1 in boxes_t1:
+        best_match = None
+        best_iou = -1.0
 
         for j, b2 in enumerate(boxes_t2):
-            if (
-                (compute_iou(b1, b2) > iou_thresh)
-                or (centroid_distance(b1, b2) < 30)
-                or (neighbor_similarity(b1, b2, boxes_t1, boxes_t2) >= 2)
-            ):
-                found = True
-                matched_t2.add(j)
-                unchanged.append(b2)
-                break
+            if j in matched_t2:
+                continue
 
-        if not found:
+            if not is_same_detection(b1, b2, boxes_t1, boxes_t2, iou_thresh=iou_thresh):
+                continue
+
+            iou_score = compute_iou(b1, b2)
+            if iou_score > best_iou:
+                best_iou = iou_score
+                best_match = (j, b2)
+
+        if best_match is None:
             removed.append(b1)
+            continue
+
+        matched_t2.add(best_match[0])
+        unchanged.append(best_match[1])
 
     # Remaining boxes in t2 → new
     for j, b2 in enumerate(boxes_t2):

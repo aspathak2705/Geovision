@@ -20,10 +20,29 @@ def _relative(path):
     return str(Path(path).resolve().relative_to(PROJECT_ROOT))
 
 
-def resize_pair(img1_path, img2_path, output_path=None):
+def _fit_to_canvas(image, target_height, target_width):
+    src_height, src_width = image.shape[:2]
+    scale = min(target_width / src_width, target_height / src_height)
+    resized_width = max(1, int(round(src_width * scale)))
+    resized_height = max(1, int(round(src_height * scale)))
+    resized = cv2.resize(image, (resized_width, resized_height), interpolation=cv2.INTER_LINEAR)
+
+    canvas = cv2.copyMakeBorder(
+        resized,
+        (target_height - resized_height) // 2,
+        target_height - resized_height - (target_height - resized_height) // 2,
+        (target_width - resized_width) // 2,
+        target_width - resized_width - (target_width - resized_width) // 2,
+        cv2.BORDER_CONSTANT,
+        value=(0, 0, 0),
+    )
+    return canvas
+
+
+def normalize_pair(img1_path, img2_path, output_path=None):
     img1_path = Path(img1_path)
     img2_path = Path(img2_path)
-    output_path = Path(output_path or PROJECT_ROOT / "data" / "t2" / "resized.jpg")
+    output_path = Path(output_path or PROJECT_ROOT / "data" / "t2" / "normalized.jpg")
 
     img1 = cv2.imread(str(img1_path))
     img2 = cv2.imread(str(img2_path))
@@ -34,7 +53,8 @@ def resize_pair(img1_path, img2_path, output_path=None):
         raise FileNotFoundError(f"Could not read comparison image: {img2_path}")
 
     h, w = img1.shape[:2]
-    img2 = cv2.resize(img2, (w, h))
+    if img2.shape[:2] != (h, w):
+        img2 = _fit_to_canvas(img2, h, w)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_path), img2)
@@ -50,7 +70,7 @@ def run_analysis(
 ):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    t1_path, t2_path = resize_pair(t1_path, t2_path)
+    t1_path, t2_path = normalize_pair(t1_path, t2_path)
     detector = Detector(confidence=confidence)
 
     boxes_t1, res1 = detector.run(str(t1_path))

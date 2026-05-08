@@ -512,7 +512,7 @@ button {
 .image-placeholder {
   background: #0f172a;
   display: grid;
-  height: 300px;
+  height: clamp(300px, 36vw, 440px);
   object-fit: contain;
   place-items: center;
   width: 100%;
@@ -543,7 +543,7 @@ button {
 
 .result-stage {
   background: #0f172a;
-  height: 390px;
+  height: clamp(390px, 48vw, 720px);
   overflow: hidden;
   position: relative;
 }
@@ -551,7 +551,7 @@ button {
 .result-stage img {
   background: #0f172a;
   display: block;
-  height: 390px;
+  height: 100%;
   object-fit: contain;
   width: 100%;
 }
